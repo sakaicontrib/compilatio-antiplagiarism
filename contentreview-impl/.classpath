@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="impl/src/java"/>
+	<classpathentry kind="src" path="impl/src/test"/>
+	<classpathentry kind="src" path="scheduler-jobs/src/java"/>
+	<classpathentry kind="src" path="tool/src/java"/>
+	<classpathentry kind="lib" path="hbm/target/sakai-contentreview-hbm-11-SNAPSHOT.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="var" path="M2_REPO/org/sakaiproject/genericdao/generic-dao/0.10.0/generic-dao-0.10.0.jar"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/kernel-compilatio"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/assignment-compilatio"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/common-compilatio"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/entitybroker-compilatio"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/content-review-compilatio"/>
+	<classpathentry kind="lib" path="/opt/libraries/commons-logging-1.2.jar"/>
+	<classpathentry kind="lib" path="/opt/libraries/commons-lang-2.6.jar"/>
+	<classpathentry kind="lib" path="/opt/libraries/cxf-3.1.2/lib/commons-codec-1.10.jar"/>
+	<classpathentry kind="lib" path="/opt/libraries/commons-validator-1.5.1.jar"/>
+	<classpathentry kind="lib" path="/opt/libraries/spring-framework-4.2.5.RELEASE/libs/spring-test-4.2.5.RELEASE.jar"/>
+	<classpathentry kind="lib" path="/opt/libraries/junit-4.12.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>

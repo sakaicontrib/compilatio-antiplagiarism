@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	    xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+	<!-- Bring in the HBM related beans beans -->
+	<import resource="hibernate-hbms.xml" />
+
+	<!-- Bring in the hibernate related beans -->
+	<import resource="spring-hibernate.xml" />
+
+	<bean
+		id="org.sakaiproject.contentreview.impl.compilatio.CompilatioContentValidator"
+		class="org.sakaiproject.contentreview.impl.compilatio.CompilatioContentValidator"
+		init-method="init">
+		<property name="contentReviewService"
+			ref="org.sakaiproject.contentreview.service.ContentReviewServiceCompilatio" />
+		<property name="serverConfigurationService"
+			ref="org.sakaiproject.component.api.ServerConfigurationService" />
+	</bean>
+
+	<!-- create a logic bean, give it the dao from above and some sakai services -->
+	<bean id="org.sakaiproject.contentreview.service.ContentReviewServiceCompilatio"
+		class="org.sakaiproject.contentreview.impl.compilatio.CompilatioReviewServiceImpl"
+		init-method="init">
+		<property name="dao"
+			ref="org.sakaiproject.contentreview.dao.ContentReviewDao" />
+		<property name="toolManager" ref="org.sakaiproject.tool.api.ToolManager" />
+		<property name="userDirectoryService"
+			ref="org.sakaiproject.user.api.UserDirectoryService" />
+		
+		<property name="serverConfigurationService"
+			ref="org.sakaiproject.component.api.ServerConfigurationService" />
+		<property name="contentHostingService"
+			ref="org.sakaiproject.content.api.ContentHostingService" />
+		<property name="assignmentService"
+			ref="org.sakaiproject.assignment.api.AssignmentService" />
+		<property name="entityManager" ref="org.sakaiproject.entity.api.EntityManager" />
+		<property name="compilatioConn"
+			ref="org.sakaiproject.contentreview.impl.compilatio.CompilatioAccountConnection" />
+		<property name="compilatioContentValidator"
+			ref="org.sakaiproject.contentreview.impl.compilatio.CompilatioContentValidator" />
+			
+			<!-- Uncomment this to delegate into advisors -->
+		<!-- <property name="siteAdvisor" ref="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" 
+			/> -->
+	</bean>
+
+	<!-- ADVISORS -->
+	<!-- Uncomment this to allow all sites to use Compilatio regardless of site, type, or property -->
+	<!-- <bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" 
+		class="org.sakaiproject.contentreview.impl.adivisors.DefaultSiteAdvisor"> 
+		</bean> -->
+		
+	<!-- Uncomment this to use a site property to define which sites use c-r -->
+	<!-- <bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" 
+		class="org.sakaiproject.contentreview.impl.adivisors.SitePropertyAdvisor"> 
+		<property name="siteProperty"><value>useContentReviewService</value></property> 
+		</bean> -->
+		
+	<!-- uncomment this bean to make c-r available to only sites of the type course -->
+	<!-- <bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" 
+		class="org.sakaiproject.contentreview.impl.adivisors.SiteCourseTypeAdvisor"> 
+		</bean> -->
+		
+	<!--  Uncomment this to use a global property to define if every site uses c-r -->
+	<!--<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor" 
+		class="org.sakaiproject.contentreview.impl.advisors.GlobalPropertyAdvisor">
+		<property name="sakaiProperty"><value>assignment.useContentReview</value></property>
+		<property name="serverConfigurationService"
+			ref="org.sakaiproject.component.api.ServerConfigurationService" />
+	</bean>-->
+	
+	<!-- uncomment this bean to make c-r available using chained advisors -->
+	<!--
+	<bean id="org.sakaiproject.contentreview.service.ContentReviewSiteAdvisor"
+		  class="org.sakaiproject.contentreview.impl.advisors.ChainedPropertyAdvisor">
+		<property name="advisors">
+			<list>
+				<bean class="org.sakaiproject.contentreview.impl.advisors.SitePropertyAdvisor">
+					<property name="siteProperty">
+						<value>useContentReviewService</value>
+					</property>
+				</bean>
+				<bean class="org.sakaiproject.contentreview.impl.advisors.GlobalPropertyAdvisor">
+					<property name="sakaiProperty">
+						<value>assignment.useContentReview</value>
+					</property>
+					<property name="serverConfigurationService"
+							  ref="org.sakaiproject.component.api.ServerConfigurationService"/>
+				</bean>
+			</list>
+		</property>
+	</bean> -->
+
+	<!-- QueuProcessing jobs -->
+	<!-- Content review Queue Process -->
+
+	<bean id="CompilatioContentReviewQueue"
+		class="org.sakaiproject.component.app.scheduler.jobs.ContentReviewQueue">
+		<property name="contentReviewService">
+			<ref bean="org.sakaiproject.contentreview.service.ContentReviewService" />
+		</property>
+		<property name="sessionManager">
+			<ref bean="org.sakaiproject.tool.api.SessionManager" />
+		</property>
+	</bean>
+
+	<bean
+		id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerContentReviewQueue"
+		class="org.sakaiproject.component.app.scheduler.jobs.SpringStatefulJobBeanWrapper"
+ 		init-method="init">
+		<property name="beanId">
+			<value>CompilatioContentReviewQueue</value>
+		</property>
+		<property name="jobName">
+			<value>Process Content Review Queue</value>
+		</property>
+		<property name="schedulerManager">
+			<ref bean="org.sakaiproject.api.app.scheduler.SchedulerManager" />
+		</property>
+	</bean>
+
+
+	<bean id="CompilatioContentReviewReports"
+		class="org.sakaiproject.component.app.scheduler.jobs.ContentReviewReports">
+		<property name="contentReviewService">
+			<ref bean="org.sakaiproject.contentreview.service.ContentReviewService" />
+		</property>
+		<property name="sessionManager">
+			<ref bean="org.sakaiproject.tool.api.SessionManager" />
+		</property>
+	</bean>
+
+	<bean
+		id="org.sakaiproject.api.app.scheduler.JobBeanWrapper.schedulerContentReviewReports"
+		class="org.sakaiproject.component.app.scheduler.jobs.SpringStatefulJobBeanWrapper"
+		init-method="init">
+		<property name="beanId">
+			<value>CompilatioContentReviewReports</value>
+		</property>
+		<property name="jobName">
+			<value>Process Content Review Reports</value>
+		</property>
+		<property name="schedulerManager">
+			<ref bean="org.sakaiproject.api.app.scheduler.SchedulerManager" />
+		</property>
+	</bean>
+
+
+	<!-- Compilatio connection -->
+	<bean
+		id="org.sakaiproject.contentreview.impl.compilatio.CompilatioAccountConnection"
+		class="org.sakaiproject.contentreview.impl.compilatio.CompilatioAccountConnection"
+		init-method="init">
+		<property name="serverConfigurationService"
+			ref="org.sakaiproject.component.api.ServerConfigurationService" />
+	</bean>
+
+</beans>

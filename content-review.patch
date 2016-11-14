@@ -1,0 +1,20 @@
+diff --git a/content-review/contentreview-federated/pack/src/webapp/WEB-INF/components.xml b/content-review/contentreview-federated/pack/src/webapp/WEB-INF/components.xml
+index 39b3edf..d941deb 100644
+--- a/content-review/contentreview-federated/pack/src/webapp/WEB-INF/components.xml
++++ b/content-review/contentreview-federated/pack/src/webapp/WEB-INF/components.xml
+@@ -9,7 +9,6 @@
+                 class="org.sakaiproject.contentreview.impl.ContentReviewFederatedServiceImpl"
+                 init-method="init">
+                 <property name="providers" ref="contentReviewProviders"/>
+-
+                 <property name="siteService" ref="org.sakaiproject.site.api.SiteService"/>
+                 <property name="toolManager" ref="org.sakaiproject.tool.api.ToolManager"/>
+                 <property name="serverConfigurationService" ref="org.sakaiproject.component.api.ServerConfigurationService" />
+@@ -20,6 +19,7 @@
+                 <!--ref bean="org.sakaiproject.contentreview.service.ContentReviewServiceTii"/>
+                 <ref bean="org.sakaiproject.contentreview.service.ContentReviewServiceVeriCite"/>
+                 -->
++                <ref bean="org.sakaiproject.contentreview.service.ContentReviewServiceCompilatio"/>
+         </util:list>
+         <!-- Override this list in sakai/sakai-configuration.xml (https://confluence.sakaiproject.org/display/REL/More+Flexible+Sakai+Configuration) like
+             <util:list id="contentReviewProviders">
