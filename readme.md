@@ -1,6 +1,6 @@
 # Compilatio : Integration with Sakai 11.x
 
-This project tries to integrate Compilatio plagiarism system with Sakai LMS. The current development is based on Turnitin integration for Sakai 11.x (https://github.com/sakaicontrib/turnitin) and Compilatio integration for Sakai 10.x (https://github.com/fberthome/sakai_compilatio).
+This project integrates Compilatio plagiarism system with Sakai LMS. The current development is based on Turnitin integration for Sakai 11.x (https://github.com/sakaicontrib/turnitin) and Compilatio integration for Sakai 10.x (https://github.com/fberthome/sakai_compilatio).
 
 Our first rule is not to modify the ContentReview API (item models or service interfaces), so the integration should be much more standard.
 
@@ -11,7 +11,7 @@ This project contains :
 ## Instructions:
 
 * Clone this project : https://github.com/sakaicontrib/compilatio-antiplagiarism
-* Path assignments tools with our patch
+* Patch assignments tools with our patch
 * Compile our contentreview-impl
 * Compile the content-review base
 * Set up the correct sakai properties
@@ -23,9 +23,9 @@ This project contains :
 - compilatio.secretKey=CLIENT_KEY
 
 * Optional
-- compilatio.proxyHost=PROXY_HOST
-- compilatio.proxyPort=PROXY_PORT
-- compilatio.apiURL=http://service.compilatio.net/webservices/CompilatioUserClient.php?
+  - compilatio.proxyHost=PROXY_HOST
+  - compilatio.proxyPort=PROXY_PORT
+  - compilatio.apiURL=http://service.compilatio.net/webservices/CompilatioUserClient.php?
 
 ## Quartz Jobs
 
