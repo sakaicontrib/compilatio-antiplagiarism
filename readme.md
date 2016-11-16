@@ -138,6 +138,4 @@ The original content review service provided by Sakai is prepared to add multipl
     <ref bean="org.sakaiproject.contentreview.service.ContentReviewServiceCompilatio"/>
 </util:list>
 ```
-  
-
 

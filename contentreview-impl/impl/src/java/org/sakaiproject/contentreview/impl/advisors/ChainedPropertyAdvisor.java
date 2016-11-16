@@ -27,23 +27,4 @@ public class ChainedPropertyAdvisor implements ContentReviewSiteAdvisor {
         return false;
     }
 
-    /*@Override
-    public boolean siteCanUseLTIReviewService(Site site) {
-        for(ContentReviewSiteAdvisor advisor: advisors) {
-            if (advisor.siteCanUseLTIReviewService(site)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    @Override
-    public boolean siteCanUseLTIDirectSubmission(Site site) {
-        for(ContentReviewSiteAdvisor advisor: advisors) {
-            if (advisor.siteCanUseLTIDirectSubmission(site)) {
-                return true;
-            }
-        }
-        return false;
-    }*/
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2006 Sakai Foundation
+ * Copyright (c) 2016 Sakai Foundation
  *
  * Licensed under the Educational Community License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,10 +54,9 @@ import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
 /**
- * This is a utility class for wrapping the physical https calls to the Turn It
+ * This is a utility class for wrapping the physical https calls to the Compilatio
  * In Service.
  * 
- * @author sgithens
  *
  */
 public class CompilatioAPIUtil {

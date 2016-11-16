@@ -5,10 +5,10 @@
     <groupId>org.sakaiproject.contentreview</groupId>
     <artifactId>sakai-contentreview-impl-compilatio</artifactId>
     <organization>
-        <name>Sakai Project</name>
-        <url>http://www.sakaiproject.org/</url>
+        <name>Compilatio</name>
+        <url>http://www.compilatio.net</url>
     </organization>
-    <inceptionYear>2006</inceptionYear>
+    <inceptionYear>2016</inceptionYear>
     <!-- the logic should be deployed as a jar and included in the pack, not to shared -->
     <packaging>jar</packaging>
 

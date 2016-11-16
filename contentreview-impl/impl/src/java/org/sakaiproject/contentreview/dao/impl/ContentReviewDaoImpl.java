@@ -3,7 +3,7 @@
  * $Id: 
  ***********************************************************************************
  *
- * Copyright (c) 2007 The Sakai Foundation.
+ * Copyright (c) 2016 The Sakai Foundation.
  * 
  * Licensed under the Educational Community License, Version 1.0 (the "License"); 
  * you may not use this file except in compliance with the License. 
@@ -33,7 +33,6 @@ import org.sakaiproject.contentreview.dao.impl.ContentReviewDao;
 /**
  * Implementations of any specialized DAO methods from the specialized DAO 
  * that allows the developer to extend the functionality of the generic dao package
- * @author Sakai App Builder -AZ
  */
 public class ContentReviewDaoImpl 
 	extends HibernateCompleteGenericDao 

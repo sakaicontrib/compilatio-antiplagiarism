@@ -3,7 +3,7 @@
  * $Id: 
  ***********************************************************************************
  *
- * Copyright (c) 2007 The Sakai Foundation.
+ * Copyright (c) 2016 The Sakai Foundation.
  * 
  * Licensed under the Educational Community License, Version 1.0 (the "License"); 
  * you may not use this file except in compliance with the License. 
@@ -26,7 +26,6 @@ import org.sakaiproject.genericdao.api.CompleteGenericDao;
 /**
  * This is a specialized DAO that allows the developer to extend
  * the functionality of the generic dao package
- * @author Sakai App Builder -AZ
  */
 public interface ContentReviewDao extends CompleteGenericDao {
 

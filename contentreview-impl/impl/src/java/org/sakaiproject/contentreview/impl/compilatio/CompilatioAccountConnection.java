@@ -1,6 +1,6 @@
 /**********************************************************************************
  *
- * Copyright (c) 2006 Sakai Foundation
+ * Copyright (c) 2016 Sakai Foundation
  *
  * Licensed under the Educational Community License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,6 @@ import org.w3c.dom.Document;
  * A large portion of this was factored out of CompilatioReviewService where it
  * originally occurred.
  *
- * @author sgithens
  *
  */
 public class CompilatioAccountConnection {
@@ -84,7 +83,7 @@ public class CompilatioAccountConnection {
 
 		secretKey = serverConfigurationService.getString("compilatio.secretKey");
 
-		apiURL = serverConfigurationService.getString("compilatio.apiURL","http://service.compilatio.net/webservices/CompilatioUserClient.php?");
+		apiURL = serverConfigurationService.getString("compilatio.apiURL", apiURL);
 
 		// Timeout period in ms for network connections (default 180s). Set to 0 to disable timeout.
 		compilatioConnTimeout = serverConfigurationService.getInt("compilatio.networkTimeout", 180000);

@@ -1,6 +1,6 @@
 /**********************************************************************************
  *
- * Copyright (c) 2006 Sakai Foundation
+ * Copyright (c) 2016 Sakai Foundation
  *
  * Licensed under the Educational Community License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,7 +40,6 @@ import org.sakaiproject.exception.ServerOverloadException;
  * utility logic for checking the length and correctness of Word Documents and
  * other things.
  * 
- * @author sgithens
  *
  */
 public class CompilatioContentValidator {
