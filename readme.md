@@ -13,7 +13,7 @@ This project contains the Compilatio implementation for ContentReview
 - Compile our contentreview-impl
 - Enable the compilatio integration in the content-review module and compile it (Sakai source).
   - Open this file content-review/contentreview-federated/pack/src/webapp/WEB-INF/components.xml
-  - Uncomment this line <ref bean="org.sakaiproject.contentreview.service.ContentReviewServiceCompilatio"/> to enable the Compilatio content review implementation
+  - Uncomment the line bean="org.sakaiproject.contentreview.service.ContentReviewServiceCompilatio" to enable the Compilatio content review implementation
 - Set up the correct sakai properties
 - Remembers to set up Quartz jobs : You will have to run jobs manually unless they're set up to auto-run.
 
