@@ -6,12 +6,11 @@ Our first rule is not to modify the ContentReview API (item models or service in
 
 This project contains : 
 - (root folder) A Compilatio implementation for ContentReview
-- (patch) A very short modification of Assignments, to allow configure Compilatio when creating a new assignment.
+- (patch) A very short modification of Content Review, to allow configure Compilatio when creating a new assignment.
 
 ## Instructions:
 
 * Clone this project : https://github.com/sakaicontrib/compilatio-antiplagiarism
-* Patch assignments tools with our patch
 * Compile our contentreview-impl
 * Compile the content-review base
 * Set up the correct sakai properties
