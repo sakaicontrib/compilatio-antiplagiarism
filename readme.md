@@ -32,6 +32,11 @@ This project contains :
 - Process Content Review Queue : Process the content-review queue, uploads documents to Compilatio and analyze them.
 - Process Content Review Reports : Get reports for analyzed documents.
 
+Create a new trigger for this jobs. We suggest you set the job to run at five minute intervals which can be done with the following definition:
+```
+0 0/5 * * * ?
+```
+
 ## Assignments set up
 
 Our patch adds some configuration options to the assignment creation screen : 
