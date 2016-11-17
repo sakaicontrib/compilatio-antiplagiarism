@@ -22,6 +22,7 @@ import java.net.Proxy;
 import java.net.SocketAddress;
 import java.util.Map;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.component.api.ServerConfigurationService;
@@ -45,9 +46,12 @@ import org.w3c.dom.Document;
  */
 public class CompilatioAccountConnection {
 	private static final Log log = LogFactory.getLog(CompilatioAccountConnection.class);
+	
+	private final static String DEFAULT_API_URL = "http://service.compilatio.net/webservices/CompilatioUserClient.php?";
+	private final static int DEFAULT_TIMEOUT = 180000;
 
 	private String secretKey = null;
-	private String apiURL = "http://service.compilatio.net/webservices/CompilatioUserClient.php?";
+	private String apiURL = "";
 	private String proxyHost = null;
 	private String proxyPort = null;
 	private int compilatioConnTimeout = 0; // Default to 0, no timeout.
@@ -63,7 +67,7 @@ public class CompilatioAccountConnection {
 
 		proxyPort = serverConfigurationService.getString("compilatio.proxyPort");
 
-		if (!"".equals(proxyHost) && !"".equals(proxyPort)) {
+		if (StringUtils.isNotBlank(proxyHost) && StringUtils.isNotBlank(proxyPort)) {
 			try {
 				SocketAddress addr = new InetSocketAddress(proxyHost, new Integer(proxyPort).intValue());
 				proxy = new Proxy(Proxy.Type.HTTP, addr);
@@ -71,7 +75,7 @@ public class CompilatioAccountConnection {
 			} catch (NumberFormatException e) {
 				log.debug("Invalid proxy port specified: " + proxyPort);
 			}
-		} else if (System.getProperty("http.proxyHost") != null && !System.getProperty("http.proxyHost").equals("")) {
+		} else if (StringUtils.isNotBlank(System.getProperty("http.proxyHost"))) {
 			try {
 				SocketAddress addr = new InetSocketAddress(System.getProperty("http.proxyHost"), new Integer(System.getProperty("http.proxyPort")).intValue());
 				proxy = new Proxy(Proxy.Type.HTTP, addr);
@@ -83,27 +87,20 @@ public class CompilatioAccountConnection {
 
 		secretKey = serverConfigurationService.getString("compilatio.secretKey");
 
-		apiURL = serverConfigurationService.getString("compilatio.apiURL", apiURL);
+		apiURL = serverConfigurationService.getString("compilatio.apiURL", DEFAULT_API_URL);
 
 		// Timeout period in ms for network connections (default 180s). Set to 0 to disable timeout.
-		compilatioConnTimeout = serverConfigurationService.getInt("compilatio.networkTimeout", 180000);
+		compilatioConnTimeout = serverConfigurationService.getInt("compilatio.networkTimeout", DEFAULT_TIMEOUT);
 
 	}
 
 	/*
 	 * Utility Methods below
-	 */
-
-
-	
+	 */	
 	public Document callCompilatioReturnDocument(Map params) throws TransientSubmissionException, SubmissionException {
 		return CompilatioAPIUtil.callCompilatioReturnDocument(apiURL, params, secretKey, compilatioConnTimeout, proxy, false);
 	}
-
-	public String callCompilatioReturnString(Map params) throws TransientSubmissionException, SubmissionException {
-		return CompilatioAPIUtil.callCompilatioReturnURL(apiURL, params, secretKey, compilatioConnTimeout, proxy, false);
-	}
-        
+	
 	// Dependency
 	private ServerConfigurationService serverConfigurationService;
 	public void setServerConfigurationService (ServerConfigurationService serverConfigurationService) {

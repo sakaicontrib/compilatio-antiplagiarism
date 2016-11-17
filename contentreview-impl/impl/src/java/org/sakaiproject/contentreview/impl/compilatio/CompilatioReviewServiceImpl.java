@@ -152,6 +152,9 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 
 	// A list of the displayable file types (ie. "Microsoft Word", "WordPerfect document", "Postscript", etc.)
 	private final String PROP_ACCEPTABLE_FILE_TYPES = "compilatio.acceptable.file.types";
+	
+	private final String PROP_MAX_FILENAME_LENGTH = "compilatio.filename.max.length";
+	private final int DEFAULT_MAX_FILENAME_LENGTH = 200;
 
 	private final String KEY_FILE_TYPE_PREFIX = "file.type";
 	
@@ -273,7 +276,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 
 		// report is available - generate the URL to display
-		Map params = CompilatioAPIUtil.packMap("action", "getDocumentReportURL", "idDocument", item.getExternalId());
+		Map<String, String> params = CompilatioAPIUtil.packMap("action", "getDocumentReportURL", "idDocument", item.getExternalId());
 
 		String reportURL = null;
 		try {
@@ -283,12 +286,8 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 				reportURL = getNodeValue("success", reportURLDoc);
 			}
 
-		} catch (TransientSubmissionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (SubmissionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+		} catch (TransientSubmissionException | SubmissionException e) {
+			log.error("Error retrieving Compilatio report URL", e);
 		}
 		return reportURL;
 	}
@@ -343,15 +342,11 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 			Document document = null;
 			// Start Compilation Analyse
 			try {
-				Map params = CompilatioAPIUtil.packMap("action", "startDocumentAnalyse", "idDocument", currentItem.getExternalId());
+				Map<String, String> params = CompilatioAPIUtil.packMap("action", "startDocumentAnalyse", "idDocument", currentItem.getExternalId());
 
 				document = compilatioConn.callCompilatioReturnDocument(params);
 
-			} catch (TransientSubmissionException e) {
-				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "Error Submitting Assignment for Submission: " + e.getMessage() + ". Assume unsuccessful", null);
-				errors++;
-				continue;
-			} catch (SubmissionException e) {
+			} catch (TransientSubmissionException | SubmissionException e) {
 				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "Error Submitting Assignment for Submission: " + e.getMessage() + ". Assume unsuccessful", null);
 				errors++;
 				continue;
@@ -371,12 +366,8 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 				success++;
 				dao.update(currentItem);
 			} else {
-				String rMessage = null, rCode = null;
-
-				if (root.getElementsByTagName("faultstring").item(0) != null && root.getElementsByTagName("faultcode").item(0) != null) {
-					rMessage = getNodeValue("faultstring", root);
-					rCode = getNodeValue("faultcode", root);
-				}
+				String rMessage = getNodeValue("faultstring", root);
+				String rCode = getNodeValue("faultcode", root);
 				
 				//TODO : check this
 				log.debug("Submission not successful: " + rMessage + "(" + rCode + ")");
@@ -407,7 +398,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		log.info("Submission queue run completed: " + success + " items submitted, " + errors + " errors.");
 	}
 
-	@SuppressWarnings({ "deprecation", "unchecked" })
+	@SuppressWarnings({ "deprecation" })
 	@Override
 	public void checkForReports() {
 		SimpleDateFormat dform = ((SimpleDateFormat) DateFormat.getDateInstance());
@@ -423,7 +414,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		List<ContentReviewItem> awaitingReport = dao.findBySearch(ContentReviewItem.class, search);
 
 		Iterator<ContentReviewItem> listIterator = awaitingReport.iterator();
-		HashMap<String, Integer> reportTable = new HashMap<String, Integer>();
+		HashMap<String, Integer> reportTable = new HashMap<>();
 
 		log.debug("There are " + awaitingReport.size() + " submissions awaiting reports");
 
@@ -435,8 +426,9 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 			currentItem = (ContentReviewItem) listIterator.next();
 
 			// has the item reached its next retry time?
-			if (currentItem.getNextRetryTime() == null)
+			if (currentItem.getNextRetryTime() == null) {
 				currentItem.setNextRetryTime(new Date());
+			}
 
 			if (currentItem.getNextRetryTime().after(new Date())) {
 				// we haven't reached the next retry time
@@ -461,8 +453,9 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 				dao.update(currentItem);
 			}
 
-			if (currentItem.getExternalId() == null || currentItem.getExternalId().equals("")) {
-				currentItem.setStatus(Long.valueOf(ContentReviewItem.REPORT_ERROR_RETRY_CODE));
+			//back to analysis (this should not happen)
+			if (StringUtils.isBlank(currentItem.getExternalId())) {
+				currentItem.setStatus(Long.valueOf(ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE));
 				dao.update(currentItem);
 				errors++;
 				continue;
@@ -474,18 +467,13 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 
 				log.debug("Attempting to update hashtable with reports for site " + currentItem.getSiteId());
 
-				Map params = CompilatioAPIUtil.packMap("action", "getDocument", "idDocument", currentItem.getExternalId());
+				Map<String, String> params = CompilatioAPIUtil.packMap("action", "getDocument", "idDocument", currentItem.getExternalId());
 
 				Document document = null;
 				try {
 					document = compilatioConn.callCompilatioReturnDocument(params);
-				} catch (TransientSubmissionException e) {
-					log.warn("Update failed due to TransientSubmissionException error: " + e.toString(), e);
-					processError(currentItem, ContentReviewItem.REPORT_ERROR_RETRY_CODE, e.getMessage(), null);
-					errors++;
-					continue;
-				} catch (SubmissionException e) {
-					log.warn("Update failed due to SubmissionException error: " + e.toString(), e);
+				} catch (TransientSubmissionException | SubmissionException e) {
+					log.warn("Update failed : " + e.toString(), e);
 					processError(currentItem, ContentReviewItem.REPORT_ERROR_RETRY_CODE, e.getMessage(), null);
 					errors++;
 					continue;
@@ -614,7 +602,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		ResourceProperties properties = site.getProperties();
 
 		String prop = (String) properties.get(COMPILATIO_SITE_PROPERTY);
-		if (prop != null) {
+		if (StringUtils.isNotBlank(prop)) {
 			log.debug("Using site property: " + prop);
 			return Boolean.parseBoolean(prop);
 		}
@@ -854,14 +842,11 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 			return false;
 		}
 		
-		// TII-97 filenames can't be longer than 200 chars
-		if (fileName != null && fileName.length() >= 200) {
-			fileName = truncateFileName(fileName, 198);
-		}
+		fileName = truncateFileName(fileName);
 
 		Document document = null;
 		try {
-			Map params = CompilatioAPIUtil.packMap("action", "addDocumentBase64", "filename",
+			Map<String, String> params = CompilatioAPIUtil.packMap("action", "addDocumentBase64", "filename",
 					URLEncoder.encode(fileName, "UTF-8"), "mimetype", resource.getContentType(), "content",
 					Base64.encodeBase64String(resource.getContent()));
 
@@ -895,12 +880,8 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 					return false;
 				}
 			} else {
-				String rMessage = null, rCode = null;
-
-				if (root.getElementsByTagName("faultstring").item(0) != null && root.getElementsByTagName("faultcode").item(0) != null) {
-					rMessage = getNodeValue("faultstring", root);
-					rCode = getNodeValue("faultcode", root);
-				}
+				String rMessage = getNodeValue("faultstring", root);
+				String rCode = getNodeValue("faultcode", root);
 				
 				log.debug("Add Document To compilatio not successful: " + rMessage + "(" + rCode + ")");
 				int errorCodeInt = -1;
@@ -924,32 +905,17 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		if (fileName == null) {
 			// use the id
 			fileName = contentId;
-		} else if (fileName.length() > 199) {
-			fileName = fileName.substring(0, 199);
 		}
 		log.debug("fileName is :" + fileName);
 		try {
 			fileName = URLDecoder.decode(fileName, "UTF-8");
 			// in rare cases it seems filenames can be double encoded
 			while (fileName.indexOf("%20") > 0 || fileName.contains("%2520")) {
-				try {
-					fileName = URLDecoder.decode(fileName, "UTF-8");
-				} catch (IllegalArgumentException eae) {
-					log.warn("Unable to decode fileName: " + fileName);
-					eae.printStackTrace();
-					// as the result is likely to cause a MD5 exception use the
-					// ID
-					return contentId;
-				}
-
+				fileName = URLDecoder.decode(fileName, "UTF-8");
 			}
-		} catch (IllegalArgumentException eae) {
-			log.warn("Unable to decode fileName: " + fileName);
-			eae.printStackTrace();
+		} catch (IllegalArgumentException | UnsupportedEncodingException eae) {
+			log.warn("Unable to decode fileName: " + fileName, eae);
 			return contentId;
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		}
 
 		fileName = fileName.replace(' ', '_');
@@ -961,7 +927,17 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		return fileName;
 	}
 
-	private String truncateFileName(String fileName, int i) {
+	private String truncateFileName(String fileName) {
+		
+		int i = serverConfigurationService.getInt(PROP_MAX_FILENAME_LENGTH, DEFAULT_MAX_FILENAME_LENGTH);
+		
+		if(StringUtils.isBlank(fileName)) {
+			return "noname";
+		}
+		if(fileName.length() < i) {
+			return fileName;
+		}
+		
 		// get the extension for later re-use
 		String extension = "";
 		if (fileName.contains(".")) {
@@ -1037,11 +1013,13 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 	private String getNodeValue(String key, NodeList nodeList) {
 		String ret = "";
 		
-		if(nodeList != null && nodeList.getLength() > 0 && nodeList.item(0).getFirstChild() != null) 
+		if(nodeList != null && nodeList.item(0) != null && nodeList.item(0).getFirstChild() != null) {
 			ret = nodeList.item(0).getFirstChild().getNodeValue();
+		}
 		
-		if(ret == null)
+		if(ret == null) {
 			ret = "";
+		}
 		
 		return ret.trim();
 	}

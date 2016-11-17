@@ -15,8 +15,6 @@
 		init-method="init">
 		<property name="contentReviewService"
 			ref="org.sakaiproject.contentreview.service.ContentReviewServiceCompilatio" />
-		<property name="serverConfigurationService"
-			ref="org.sakaiproject.component.api.ServerConfigurationService" />
 	</bean>
 
 	<!-- create a logic bean, give it the dao from above and some sakai services -->
