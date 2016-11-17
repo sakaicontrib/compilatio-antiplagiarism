@@ -12,7 +12,10 @@ This project contains :
 
 * Clone this project : https://github.com/sakaicontrib/compilatio-antiplagiarism
 * Compile our contentreview-impl
-* Compile the content-review base
+* Enable the compilatio integration in the content-review module and compile it (Sakai source).
+> Open this file content-review/contentreview-federated/pack/src/webapp/WEB-INF/components.xml
+>
+> Uncomment this line <ref bean="org.sakaiproject.contentreview.service.ContentReviewServiceCompilatio"/> to enable the Compilatio content review implementation
 * Set up the correct sakai properties
 * Remembers to set up Quartz jobs : You will have to run jobs manually unless they're set up to auto-run.
 
@@ -38,7 +41,7 @@ Create a new trigger for this jobs. We suggest you set the job to run at five mi
 
 ## Assignments set up
 
-Our patch adds some configuration options to the assignment creation screen : 
+Options in the assignment creation screen : 
 - Use Compilatio : Basic check to activate the plagiarism system
 - Allow students to view report : Let the students get a link to the Compilatio results report.
 - Generate originality reports : 
