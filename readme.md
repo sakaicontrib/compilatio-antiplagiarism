@@ -4,20 +4,18 @@ This project integrates Compilatio plagiarism system with Sakai LMS. The current
 
 Our first rule is not to modify the ContentReview API (item models or service interfaces), so the integration should be much more standard.
 
-This project contains : 
-- (root folder) A Compilatio implementation for ContentReview
-- (patch) A very short modification of Content Review, to allow configure Compilatio when creating a new assignment.
+This project contains the Compilatio implementation for ContentReview
+
 
 ## Instructions:
 
-* Clone this project : https://github.com/sakaicontrib/compilatio-antiplagiarism
-* Compile our contentreview-impl
-* Enable the compilatio integration in the content-review module and compile it (Sakai source).
-> Open this file content-review/contentreview-federated/pack/src/webapp/WEB-INF/components.xml
->
-> Uncomment this line <ref bean="org.sakaiproject.contentreview.service.ContentReviewServiceCompilatio"/> to enable the Compilatio content review implementation
-* Set up the correct sakai properties
-* Remembers to set up Quartz jobs : You will have to run jobs manually unless they're set up to auto-run.
+- Clone this project : https://github.com/sakaicontrib/compilatio-antiplagiarism
+- Compile our contentreview-impl
+- Enable the compilatio integration in the content-review module and compile it (Sakai source).
+  - Open this file content-review/contentreview-federated/pack/src/webapp/WEB-INF/components.xml
+  - Uncomment this line <ref bean="org.sakaiproject.contentreview.service.ContentReviewServiceCompilatio"/> to enable the Compilatio content review implementation
+- Set up the correct sakai properties
+- Remembers to set up Quartz jobs : You will have to run jobs manually unless they're set up to auto-run.
 
 ## Sakai properties
 
