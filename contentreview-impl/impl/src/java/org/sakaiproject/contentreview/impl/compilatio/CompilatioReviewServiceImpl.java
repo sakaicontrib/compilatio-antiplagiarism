@@ -154,7 +154,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 	private final String PROP_ACCEPTABLE_FILE_TYPES = "compilatio.acceptable.file.types";
 	
 	private final String PROP_MAX_FILENAME_LENGTH = "compilatio.filename.max.length";
-	private final int DEFAULT_MAX_FILENAME_LENGTH = 200;
+	private final int DEFAULT_MAX_FILENAME_LENGTH = -1;
 
 	private final String KEY_FILE_TYPE_PREFIX = "file.type";
 	
@@ -933,6 +933,9 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		
 		if(StringUtils.isBlank(fileName)) {
 			return "noname";
+		}
+		if(i < 0) {
+			return fileName;
 		}
 		if(fileName.length() < i) {
 			return fileName;
