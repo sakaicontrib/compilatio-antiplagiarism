@@ -308,26 +308,15 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		log.info("Processing submission queue");
 		int errors = 0;
 		int success = 0;
-
-		for (ContentReviewItem currentItem = getNextItemInSubmissionQueue(); currentItem != null; currentItem = getNextItemInSubmissionQueue()) {
-
-			log.debug("Attempting to submit content (status:"+currentItem.getStatus()+"): " + currentItem.getContentId() + " for user: "
+		
+		//first get not uploaded items
+		for (ContentReviewItem currentItem = getNextItemWithoutExternalId(); currentItem != null; currentItem = getNextItemWithoutExternalId()) {
+			log.debug("Attempting to upload content (status:"+currentItem.getStatus()+"): " + currentItem.getContentId() + " for user: "
 					+ currentItem.getUserId() + " and site: " + currentItem.getSiteId());						
 
-			if (currentItem.getRetryCount() == null) {
-				currentItem.setRetryCount(Long.valueOf(0));
-				currentItem.setNextRetryTime(this.getNextRetryTime(0));
-				dao.update(currentItem);
-			} else if (currentItem.getRetryCount().intValue() > maxRetry) {
-				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED, null, null);
+			if(!processItem(currentItem)){
 				errors++;
 				continue;
-			} else {
-				long l = currentItem.getRetryCount().longValue();
-				l++;
-				currentItem.setRetryCount(Long.valueOf(l));
-				currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
-				dao.update(currentItem);
 			}
 			
 			//if document has no external id, we need to add it to compilatio
@@ -335,8 +324,22 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 				//check if we have added it correctly
 				if(addDocumentToCompilatio(currentItem) == false){
 					errors++;
-					continue;
 				}
+			}
+			
+			// release the lock so the reports job can handle it
+			releaseLock(currentItem);
+		}
+
+		//get documents to analyze
+		for (ContentReviewItem currentItem = getNextItemInSubmissionQueue(); currentItem != null; currentItem = getNextItemInSubmissionQueue()) {
+
+			log.debug("Attempting to submit content (status:"+currentItem.getStatus()+"): " + currentItem.getContentId() + " for user: "
+					+ currentItem.getUserId() + " and site: " + currentItem.getSiteId());						
+
+			if(!processItem(currentItem)){
+				errors++;
+				continue;
 			}
 			
 			Document document = null;
@@ -414,7 +417,6 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		List<ContentReviewItem> awaitingReport = dao.findBySearch(ContentReviewItem.class, search);
 
 		Iterator<ContentReviewItem> listIterator = awaitingReport.iterator();
-		HashMap<String, Integer> reportTable = new HashMap<>();
 
 		log.debug("There are " + awaitingReport.size() + " submissions awaiting reports");
 
@@ -437,20 +439,9 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 				continue;
 			}
 
-			if (currentItem.getRetryCount() == null) {
-				currentItem.setRetryCount(Long.valueOf(0));
-				currentItem.setNextRetryTime(this.getNextRetryTime(0));
-			} else if (currentItem.getRetryCount().intValue() > maxRetry) {
-				processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED, null, null);
+			if(!processItem(currentItem)){
 				errors++;
 				continue;
-			} else {
-				long l = currentItem.getRetryCount().longValue();
-				log.debug("Still have retries left ("+l+" <= "+maxRetry+"), continuing. ItemID: " + currentItem.getId());
-				l++;
-				currentItem.setRetryCount(Long.valueOf(l));
-				currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
-				dao.update(currentItem);
 			}
 
 			//back to analysis (this should not happen)
@@ -461,59 +452,57 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 				continue;
 			}
 
-			if (!reportTable.containsKey(currentItem.getExternalId())) {
-				// get the list from compilatio and see if the review is
-				// available
+			// get the list from compilatio and see if the review is
+			// available
 
-				log.debug("Attempting to update hashtable with reports for site " + currentItem.getSiteId());
+			log.debug("Attempting to update hashtable with reports for site " + currentItem.getSiteId());
 
-				Map<String, String> params = CompilatioAPIUtil.packMap("action", "getDocument", "idDocument", currentItem.getExternalId());
+			Map<String, String> params = CompilatioAPIUtil.packMap("action", "getDocument", "idDocument", currentItem.getExternalId());
 
-				Document document = null;
-				try {
-					document = compilatioConn.callCompilatioReturnDocument(params);
-				} catch (TransientSubmissionException | SubmissionException e) {
-					log.warn("Update failed : " + e.toString(), e);
-					processError(currentItem, ContentReviewItem.REPORT_ERROR_RETRY_CODE, e.getMessage(), null);
+			Document document = null;
+			try {
+				document = compilatioConn.callCompilatioReturnDocument(params);
+			} catch (TransientSubmissionException | SubmissionException e) {
+				log.warn("Update failed : " + e.toString(), e);
+				processError(currentItem, ContentReviewItem.REPORT_ERROR_RETRY_CODE, e.getMessage(), null);
+				errors++;
+				continue;
+			}
+
+			Element root = document.getDocumentElement();
+			if (root.getElementsByTagName("documentStatus").item(0) != null) {
+				log.debug("Report list returned successfully");
+
+				NodeList objects = root.getElementsByTagName("documentStatus");
+				log.debug(objects.getLength() + " objects in the returned list");
+				
+				String status = getNodeValue("status", root);
+
+				if ("ANALYSE_NOT_STARTED".equals(status)) {
+					//send back to the process queue, we need no analyze it again
+					processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "ANALYSE_NOT_STARTED", null);
 					errors++;
 					continue;
-				}
-
-				Element root = document.getDocumentElement();
-				if (root.getElementsByTagName("documentStatus").item(0) != null) {
-					log.debug("Report list returned successfully");
-
-					NodeList objects = root.getElementsByTagName("documentStatus");
-					log.debug(objects.getLength() + " objects in the returned list");
-					
-					String status = getNodeValue("status", root);
-
-					if ("ANALYSE_NOT_STARTED".equals(status)) {
-						//send back to the process queue, we need no analyze it again
-						processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "ANALYSE_NOT_STARTED", null);
-						errors++;
-						continue;
-					} else if ("ANALYSE_COMPLETE".equals(status)) {
-						String reportVal = getNodeValue("indice", root);
-						currentItem.setReviewScore((int) Math.round(Double.parseDouble(reportVal)));
-						currentItem.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
-						success++;
-					} else {
-						String progression = getNodeValue("progression", root);
-						if (StringUtils.isNotBlank(progression)) {
-							currentItem.setReviewScore((int) Double.parseDouble(progression));
-							inprogress++;
-						}
-					}
-					currentItem.setDateReportReceived(new Date());
-					dao.update(currentItem);
-					log.debug("new report received: " + currentItem.getExternalId() + " -> " + currentItem.getReviewScore());
-
+				} else if ("ANALYSE_COMPLETE".equals(status)) {
+					String reportVal = getNodeValue("indice", root);
+					currentItem.setReviewScore((int) Math.round(Double.parseDouble(reportVal)));
+					currentItem.setStatus(ContentReviewItem.SUBMITTED_REPORT_AVAILABLE_CODE);
+					success++;
 				} else {
-					log.debug("Report list request not successful");
-					log.debug(document.getTextContent());
-
+					String progression = getNodeValue("progression", root);
+					if (StringUtils.isNotBlank(progression)) {
+						currentItem.setReviewScore((int) Double.parseDouble(progression));
+						inprogress++;
+					}
 				}
+				currentItem.setDateReportReceived(new Date());
+				dao.update(currentItem);
+				log.debug("new report received: " + currentItem.getExternalId() + " -> " + currentItem.getReviewScore());
+
+			} else {
+				log.debug("Report list request not successful");
+				log.debug(document.getTextContent());
+
 			}
 		}
 
@@ -727,25 +716,49 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		// Submit items that haven't yet been submitted
 		Search search = new Search();
 		search.addRestriction(new Restriction("status", ContentReviewItem.NOT_SUBMITTED_CODE));
+		search.addRestriction(new Restriction("externalId", "", Restriction.NOT_NULL));
 		List<ContentReviewItem> notSubmittedItems = dao.findBySearch(ContentReviewItem.class, search);
 		ContentReviewItem nextItem = getItemPastRetryTime( notSubmittedItems );
 		if( nextItem != null )
 		{
 			return nextItem;
 		}
-		/*for( ContentReviewItem item : notSubmittedItems ) {
-			// can we get a lock?
-			if (obtainLock("item." + item.getId().toString())) {
-				return item;
-			}
-		}*/
 		
 		// Submit items that should be retried
 		search = new Search();
 		search.addRestriction(new Restriction("status", ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE));
+		search.addRestriction(new Restriction("externalId", "", Restriction.NOT_NULL));
 		notSubmittedItems = dao.findBySearch(ContentReviewItem.class, search);
 		
 		nextItem = getItemPastRetryTime( notSubmittedItems );
+		if( nextItem != null )
+		{
+			return nextItem;
+		}
+
+		return null;
+	}
+	
+	private ContentReviewItem getNextItemWithoutExternalId() {
+
+
+		// Submit items that haven't yet been submitted
+		Search search = new Search();
+		search.addRestriction(new Restriction("status", ContentReviewItem.NOT_SUBMITTED_CODE));
+		search.addRestriction(new Restriction("externalId", "", Restriction.NULL));
+		List<ContentReviewItem> notSubmittedItems = dao.findBySearch(ContentReviewItem.class, search);
+		ContentReviewItem nextItem = getItemPastRetryTime( notSubmittedItems, false );
+		if( nextItem != null )
+		{
+			return nextItem;
+		}
+		
+		// Submit items that should be retried
+		search = new Search();
+		search.addRestriction(new Restriction("status", ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE));
+		search.addRestriction(new Restriction("externalId", "", Restriction.NULL));
+		notSubmittedItems = dao.findBySearch(ContentReviewItem.class, search);
+		nextItem = getItemPastRetryTime( notSubmittedItems, false );
 		if( nextItem != null )
 		{
 			return nextItem;
@@ -761,12 +774,18 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 	 * @param Items the list of ContentReviewItems to iterate over.
 	 * @return the first item in the list that meets the requirements, or null.
 	 */
-	private ContentReviewItem getItemPastRetryTime( List<ContentReviewItem> items )
+	private ContentReviewItem getItemPastRetryTime( List<ContentReviewItem> items ){
+		return getItemPastRetryTime(items, true);
+	}
+	private ContentReviewItem getItemPastRetryTime( List<ContentReviewItem> items, boolean fullCheck)
 	{
 		for( ContentReviewItem item : items )
 		{
 			if( hasReachedRetryTime( item ) && obtainLock( "item." + item.getId().toString() ) )
 			{
+				if(!fullCheck) {
+					return item;
+				}
 				try {
 					//check if current item has to be processed after the assignment due date
 					String assignmentId = assignmentService.getEntity(entityManager.newReference(item.getTaskId())).getId();
@@ -870,6 +889,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 					currentItem.setExternalId(externalId);
 					currentItem.setStatus(ContentReviewItem.NOT_SUBMITTED_CODE);
 					currentItem.setRetryCount(Long.valueOf(0));
+					currentItem.setNextRetryTime(new Date());
 					currentItem.setLastError(null);
 					currentItem.setErrorCode(null);
 					currentItem.setDateSubmitted(new Date());
@@ -1055,5 +1075,23 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		{
 			releaseLock( item );
 		}
+	}
+	
+	private boolean processItem(ContentReviewItem currentItem){
+		if (currentItem.getRetryCount() == null) {
+			currentItem.setRetryCount(Long.valueOf(0));
+			currentItem.setNextRetryTime(this.getNextRetryTime(0));
+		} else if (currentItem.getRetryCount().intValue() > maxRetry) {
+			processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_EXCEEDED, null, null);
+			return false;
+		} else {
+			long l = currentItem.getRetryCount().longValue();
+			l++;
+			currentItem.setRetryCount(Long.valueOf(l));
+			currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
+		}
+		dao.update(currentItem);
+		
+		return true;
 	}
 }

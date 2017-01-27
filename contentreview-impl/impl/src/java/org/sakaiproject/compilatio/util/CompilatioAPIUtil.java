@@ -19,7 +19,6 @@ package org.sakaiproject.compilatio.util;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.Proxy;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLStreamHandler;
@@ -57,8 +56,7 @@ import org.xml.sax.SAXException;
 public class CompilatioAPIUtil {
 	private static final Log log = LogFactory.getLog(CompilatioAPIUtil.class);
 
-	public static Document callCompilatioReturnDocument(String apiURL, Map<String, String> parameters, String secretKey,
-			final int timeout, Proxy proxy, boolean isMultipart) throws TransientSubmissionException, SubmissionException {
+	public static Document callCompilatioReturnDocument(String apiURL, Map<String, String> parameters, String secretKey, final int timeout) throws TransientSubmissionException, SubmissionException {
 
 		SOAPConnectionFactory soapConnectionFactory;
 		Document xmlDocument = null;

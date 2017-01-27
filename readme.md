@@ -24,8 +24,6 @@ This project contains the Compilatio implementation for ContentReview
 - compilatio.secretKey=CLIENT_KEY
 
 #### Optional  (or with default value)
-  - compilatio.proxyHost=PROXY_HOST
-  - compilatio.proxyPort=PROXY_PORT
   - compilatio.apiURL=http://service.compilatio.net/webservices/CompilatioUserClient.php?
   - compilatio.accept.all.files=false
   - compilatio.acceptable.mime.types=application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/excel,application/vnd.ms-excel,application/x-excel,application/x-msexcel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/mspowerpoint,application/powerpoint,application/vnd.ms-powerpoint,application/x-mspowerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/mspowerpoint,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.slideshow,application/pdf,application/postscript,application/postscript,text/plain,text/html,text/html,application/wordperfect,application/x-wpwin,application/vnd.oasis.opendocument.text,text/rtf,application/rtf,application/x-rtf,text/richtext
