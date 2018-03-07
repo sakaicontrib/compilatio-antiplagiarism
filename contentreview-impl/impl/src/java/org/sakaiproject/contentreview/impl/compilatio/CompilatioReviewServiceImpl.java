@@ -72,78 +72,78 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
-	
+
 	private static final Log log = LogFactory.getLog(CompilatioReviewServiceImpl.class);
-	
+
 	public static final String COMPILATIO_DATETIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
-	
+
 	private static final String SERVICE_NAME = "Compilatio";
-	
+
 	// Site property to enable or disable use of Compilatio for the site
 	private static final String COMPILATIO_SITE_PROPERTY = "compilatio";
-	
+
 	// Define Compilatio's acceptable file extensions and MIME types, order of these arrays DOES matter
 	private final String[] DEFAULT_ACCEPTABLE_FILE_EXTENSIONS = new String[] {
-			".doc", 
-			".docx", 
-			".xls", 
-			".xls", 
-			".xls", 
-			".xls", 
-			".xlsx", 
-			".ppt", 
-			".ppt", 
-			".ppt", 
-			".ppt", 
-			".pptx", 
-			".pps", 
-			".pps", 
-			".ppsx", 
-			".pdf", 
-			".ps", 
-			".eps", 
-			".txt", 
-			".html", 
-			".htm", 
-			".wpd", 
-			".wpd", 
-			".odt", 
-			".rtf", 
-			".rtf", 
-			".rtf", 
+			".doc",
+			".docx",
+			".xls",
+			".xls",
+			".xls",
+			".xls",
+			".xlsx",
+			".ppt",
+			".ppt",
+			".ppt",
+			".ppt",
+			".pptx",
+			".pps",
+			".pps",
+			".ppsx",
+			".pdf",
+			".ps",
+			".eps",
+			".txt",
+			".html",
+			".htm",
+			".wpd",
+			".wpd",
+			".odt",
+			".rtf",
+			".rtf",
+			".rtf",
 			".rtf"
 	};
 	private final String[] DEFAULT_ACCEPTABLE_MIME_TYPES = new String[] {
-			"application/msword", 
-			"application/vnd.openxmlformats-officedocument.wordprocessingml.document", 
-			"application/excel", 
-			"application/vnd.ms-excel", 
-			"application/x-excel", 
-			"application/x-msexcel", 
-			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", 
-			"application/mspowerpoint", 
-			"application/powerpoint", 
-			"application/vnd.ms-powerpoint", 
-			"application/x-mspowerpoint", 
-			"application/vnd.openxmlformats-officedocument.presentationml.presentation", 
-			"application/mspowerpoint", 
-			"application/vnd.ms-powerpoint", 
-			"application/vnd.openxmlformats-officedocument.presentationml.slideshow", 
-			"application/pdf", 
-			"application/postscript", 
-			"application/postscript", 
-			"text/plain", 
-			"text/html", 
-			"text/html", 
-			"application/wordperfect", 
-			"application/x-wpwin", 
-			"application/vnd.oasis.opendocument.text", 
-			"text/rtf", 
-			"application/rtf", 
-			"application/x-rtf", 
+			"application/msword",
+			"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+			"application/excel",
+			"application/vnd.ms-excel",
+			"application/x-excel",
+			"application/x-msexcel",
+			"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+			"application/mspowerpoint",
+			"application/powerpoint",
+			"application/vnd.ms-powerpoint",
+			"application/x-mspowerpoint",
+			"application/vnd.openxmlformats-officedocument.presentationml.presentation",
+			"application/mspowerpoint",
+			"application/vnd.ms-powerpoint",
+			"application/vnd.openxmlformats-officedocument.presentationml.slideshow",
+			"application/pdf",
+			"application/postscript",
+			"application/postscript",
+			"text/plain",
+			"text/html",
+			"text/html",
+			"application/wordperfect",
+			"application/x-wpwin",
+			"application/vnd.oasis.opendocument.text",
+			"text/rtf",
+			"application/rtf",
+			"application/x-rtf",
 			"text/richtext"
 	};
-	
+
 	// Sakai.properties overriding the arrays above
 	private final String PROP_ACCEPT_ALL_FILES = "compilatio.accept.all.files";
 
@@ -152,23 +152,23 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 
 	// A list of the displayable file types (ie. "Microsoft Word", "WordPerfect document", "Postscript", etc.)
 	private final String PROP_ACCEPTABLE_FILE_TYPES = "compilatio.acceptable.file.types";
-	
+
 	private final String PROP_MAX_FILENAME_LENGTH = "compilatio.filename.max.length";
 	private final int DEFAULT_MAX_FILENAME_LENGTH = -1;
 
 	private final String KEY_FILE_TYPE_PREFIX = "file.type";
-	
+
 	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_IMMEDIATELY = "0";
-	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_DUE = "2";	
-	
+	private static final String NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_DUE = "2";
+
 	final static long LOCK_PERIOD = 12000000;
 	private Long maxRetry = 20L;
-	
+
 	private String defaultAssignmentName = null;
-	
+
 	public enum CompilatioError {
 		INVALID_ID_FOLDER(1), NOT_ENOUGH_SPACE(2), TEMPORARY_UNAVAILABLE(3), INVALID_KEY(4), NOT_ENOUGH_CREDITS(5), ANALYSE_ALREADY_STARTED(6), INVALID_FILE_TYPE(10), NO_CONTENT_FOUND(11), TEXT_EXTRACTION_FAILED(12), NO_TEXT_FOUND(13), UNANALYSABLE_TEXT(14);
-	
+
 		private int errorCode;
 		public int getErrorCode() {
 			return errorCode;
@@ -176,7 +176,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		private CompilatioError(int errorCode) {
 			this.errorCode = errorCode;
 		}
-		
+
 		public static CompilatioError find(int faultCodeInt) {
 			CompilatioError errorReturn = null;
 			for(CompilatioError error : CompilatioError.values()) {
@@ -184,19 +184,19 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 					errorReturn = error;
 				}
 			}
-			
+
 			return errorReturn ;
 		}
-		
+
 	}
-	
+
 	protected ServerConfigurationService serverConfigurationService;
 	protected ContentHostingService contentHostingService;
 	protected AssignmentService assignmentService;
 	protected EntityManager entityManager;
 	protected CompilatioAccountConnection compilatioConn;
 	protected CompilatioContentValidator compilatioContentValidator;
-	
+
 	public void setCompilatioConn(CompilatioAccountConnection compilatioConn) {
 		this.compilatioConn = compilatioConn;
 	}
@@ -215,8 +215,8 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 	public void setCompilatioContentValidator(CompilatioContentValidator compilatioContentValidator) {
 		this.compilatioContentValidator = compilatioContentValidator;
 	}
-	
-	public void init() {		
+
+	public void init() {
 	}
 
 	/* --------------------------------------------------------------------
@@ -227,7 +227,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 	public String getServiceName() {
 		return SERVICE_NAME;
 	}
-	
+
 
 	@Override
 	public int getReviewScore(String contentId, String assignmentRef, String userId) throws QueueException, ReportException, Exception {
@@ -296,8 +296,8 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 	public String getReviewReportInstructor(String contentId, String assignmentRef, String userId) throws QueueException, ReportException {
 		return getReviewReport(contentId, assignmentRef, userId);
 	}
-	
-	@Override	
+
+	@Override
 	public String getReviewReportStudent(String contentId, String assignmentRef, String userId) throws QueueException, ReportException {
 		return getReviewReport(contentId, assignmentRef, userId);
 	}
@@ -308,17 +308,17 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		log.info("Processing submission queue");
 		int errors = 0;
 		int success = 0;
-		
+
 		//first get not uploaded items
 		for (ContentReviewItem currentItem = getNextItemWithoutExternalId(); currentItem != null; currentItem = getNextItemWithoutExternalId()) {
 			log.debug("Attempting to upload content (status:"+currentItem.getStatus()+"): " + currentItem.getContentId() + " for user: "
-					+ currentItem.getUserId() + " and site: " + currentItem.getSiteId());						
+					+ currentItem.getUserId() + " and site: " + currentItem.getSiteId());
 
 			if(!processItem(currentItem)){
 				errors++;
 				continue;
 			}
-			
+
 			//if document has no external id, we need to add it to compilatio
 			if(StringUtils.isBlank(currentItem.getExternalId())) {
 				//check if we have added it correctly
@@ -326,7 +326,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 					errors++;
 				}
 			}
-			
+
 			// release the lock so the reports job can handle it
 			releaseLock(currentItem);
 		}
@@ -335,13 +335,13 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		for (ContentReviewItem currentItem = getNextItemInSubmissionQueue(); currentItem != null; currentItem = getNextItemInSubmissionQueue()) {
 
 			log.debug("Attempting to submit content (status:"+currentItem.getStatus()+"): " + currentItem.getContentId() + " for user: "
-					+ currentItem.getUserId() + " and site: " + currentItem.getSiteId());						
+					+ currentItem.getUserId() + " and site: " + currentItem.getSiteId());
 
 			if(!processItem(currentItem)){
 				errors++;
 				continue;
 			}
-			
+
 			Document document = null;
 			// Start Compilation Analyse
 			try {
@@ -371,7 +371,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 			} else {
 				String rMessage = getNodeValue("faultstring", root);
 				String rCode = getNodeValue("faultcode", root);
-				
+
 				//TODO : check this
 				log.debug("Submission not successful: " + rMessage + "(" + rCode + ")");
 				if (CompilatioError.ANALYSE_ALREADY_STARTED.equals(CompilatioError.valueOf(rCode))) {
@@ -390,7 +390,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 					processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "Submission Error: " + rMessage + "(" + rCode + ")", errorCodeInt);
 					errors++;
 				}
-	
+
 				dao.update(currentItem);
 			}
 			// release the lock so the reports job can handle it
@@ -475,7 +475,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 
 				NodeList objects = root.getElementsByTagName("documentStatus");
 				log.debug(objects.getLength() + " objects in the returned list");
-				
+
 				String status = getNodeValue("status", root);
 
 				if ("ANALYSE_NOT_STARTED".equals(status)) {
@@ -508,8 +508,8 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 
 		log.info("Finished fetching reports from Compilatio : "+success+" success items, "+inprogress+" in progress, "+errors+" errors");
 	}
-	
-	
+
+
 
 	@Override
 	public boolean allowAllContent() {
@@ -605,9 +605,9 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		String urlBase = "/sakai-contentreview-tool-federated/images/score_";
 		String suffix = ".gif";
 
-		if (score.compareTo(Long.valueOf(5)) <= 0) {
+		if (score.compareTo(Long.valueOf(10)) <= 0) {
 			return urlBase + "green" + suffix;
-		} else if (score.compareTo(Long.valueOf(20)) <= 0) {
+		} else if (score.compareTo(Long.valueOf(25)) <= 0) {
 			return urlBase + "orange" + suffix;
 		} else {
 			return urlBase + "red" + suffix;
@@ -631,7 +631,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 	public String getLocalizedStatusMessage(String messageCode) {
 		return getLocalizedStatusMessage(messageCode, userDirectoryService.getCurrentUser().getReference());
 	}
-	
+
 	@Override
 	public String getLocalizedStatusMessage(String messageCode, Locale locale) {
 		// TODO not sure how to do this with the sakai resource loader
@@ -652,10 +652,10 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 	@Override
 	public void createAssignment(String siteId, String taskId, Map extraAsnnOpts) throws SubmissionException, TransientSubmissionException {
 		// TODO Auto-generated method stub
-		
+
 	}
 
-	
+
 	//-----------------------------------------------------------------------------
 	// Extra methods
 	//-----------------------------------------------------------------------------
@@ -680,10 +680,10 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		return getLocalizedStatusMessage(errorCode.toString());
 	}
-	
+
 	/**
 	 * find the next time this item should be tried
-	 * 
+	 *
 	 * @param retryCount
 	 * @return
 	 */
@@ -710,7 +710,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		cal.add(Calendar.MINUTE, offset);
 		return cal.getTime();
 	}
-	
+
 	private ContentReviewItem getNextItemInSubmissionQueue() {
 
 		// Submit items that haven't yet been submitted
@@ -723,13 +723,13 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		{
 			return nextItem;
 		}
-		
+
 		// Submit items that should be retried
 		search = new Search();
 		search.addRestriction(new Restriction("status", ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE));
 		search.addRestriction(new Restriction("externalId", "", Restriction.NOT_NULL));
 		notSubmittedItems = dao.findBySearch(ContentReviewItem.class, search);
-		
+
 		nextItem = getItemPastRetryTime( notSubmittedItems );
 		if( nextItem != null )
 		{
@@ -738,7 +738,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 
 		return null;
 	}
-	
+
 	private ContentReviewItem getNextItemWithoutExternalId() {
 
 
@@ -752,7 +752,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		{
 			return nextItem;
 		}
-		
+
 		// Submit items that should be retried
 		search = new Search();
 		search.addRestriction(new Restriction("status", ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE));
@@ -766,11 +766,11 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 
 		return null;
 	}
-	
+
 	/**
 	 * Returns the first item in the list which has surpassed it's next retry time, and we can get a lock on the object.
 	 * Otherwise returns null.
-	 * 
+	 *
 	 * @param Items the list of ContentReviewItems to iterate over.
 	 * @return the first item in the list that meets the requirements, or null.
 	 */
@@ -791,7 +791,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 					String assignmentId = assignmentService.getEntity(entityManager.newReference(item.getTaskId())).getId();
 					Assignment a = assignmentService.getAssignment(assignmentId);
 					AssignmentContent ac = a.getContent();
-					
+
 					if(ac.getGenerateOriginalityReport().equals(NEW_ASSIGNMENT_REVIEW_SERVICE_REPORT_DUE)) {
 						Date dueDate = new Date(a.getDueTime().getTime());
 						if(dueDate.before(new Date())) {
@@ -809,7 +809,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 
 		return null;
 	}
-	
+
 	private boolean hasReachedRetryTime(ContentReviewItem item) {
 		// has the item reached its next retry time?
 		if (item.getNextRetryTime() == null)
@@ -826,7 +826,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 
 		return true;
 	}
-	
+
 	private boolean addDocumentToCompilatio(ContentReviewItem currentItem) {
 		// to get the name of the initial submited file we need the title
 		ContentResource resource = null;
@@ -834,7 +834,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		try {
 			try {
 				resource = contentHostingService.getResource(currentItem.getContentId());
-				
+
 				//this never should happen, user can not add to queue invalid files
 				if(!compilatioContentValidator.isAcceptableContent(resource)){
 					log.error("Not valid extension: resource with id " + currentItem.getContentId());
@@ -860,7 +860,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 			processError(currentItem, ContentReviewItem.SUBMISSION_ERROR_RETRY_CODE, "Permission exception: " + e2.getMessage(), null);
 			return false;
 		}
-		
+
 		fileName = truncateFileName(fileName);
 
 		Document document = null;
@@ -875,14 +875,14 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 				return false;
 				//return CompilatioError.TEMPORARY_UNAVAILABLE.name();
 			}
-			
+
 			Element root = document.getDocumentElement();
-			
+
 			String externalId = null;
 			if (root.getElementsByTagName("idDocument").item(0) != null) {
 				externalId = getNodeValue("idDocument", root);
 			}
-			
+
 			if (externalId != null) {
 				if (externalId.length() > 0) {
 					log.debug("Submission successful");
@@ -902,7 +902,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 			} else {
 				String rMessage = getNodeValue("faultstring", root);
 				String rCode = getNodeValue("faultcode", root);
-				
+
 				log.debug("Add Document To compilatio not successful: " + rMessage + "(" + rCode + ")");
 				int errorCodeInt = -1;
 				CompilatioError errorCode = CompilatioError.valueOf(rCode);
@@ -919,7 +919,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 
 		return true;
 	}
-	
+
 	public String escapeFileName(String fileName, String contentId) {
 		log.debug("original filename is: " + fileName);
 		if (fileName == null) {
@@ -948,9 +948,9 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 	}
 
 	private String truncateFileName(String fileName) {
-		
+
 		int i = serverConfigurationService.getInt(PROP_MAX_FILENAME_LENGTH, DEFAULT_MAX_FILENAME_LENGTH);
-		
+
 		if(StringUtils.isBlank(fileName)) {
 			return "noname";
 		}
@@ -960,7 +960,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		if(fileName.length() < i) {
 			return fileName;
 		}
-		
+
 		// get the extension for later re-use
 		String extension = "";
 		if (fileName.contains(".")) {
@@ -977,11 +977,11 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		Boolean lock = dao.obtainLock(itemId, serverConfigurationService.getServerId(), LOCK_PERIOD);
 		return (lock != null) ? lock : false;
 	}
-	
+
 	private void releaseLock(ContentReviewItem currentItem) {
 		dao.releaseLock("item." + currentItem.getId().toString(), serverConfigurationService.getServerId());
 	}
-	
+
 	private String[] getAcceptableMimeTypes()
 	{
 		String[] mimeTypes = serverConfigurationService.getStrings(PROP_ACCEPTABLE_MIME_TYPES);
@@ -991,7 +991,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		return DEFAULT_ACCEPTABLE_MIME_TYPES;
 	}
-	
+
 	private String[] getAcceptableFileExtensions()
 	{
 		String[] extensions = serverConfigurationService.getStrings(PROP_ACCEPTABLE_FILE_EXTENSIONS);
@@ -1001,12 +1001,12 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		return DEFAULT_ACCEPTABLE_FILE_EXTENSIONS;
 	}
-	
+
 	private String [] getAcceptableFileTypes()
 	{
 		return serverConfigurationService.getStrings(PROP_ACCEPTABLE_FILE_TYPES);
 	}
-	
+
 	/**
 	 * Inserts (key, value) into a Map<String, Set<String>> such that value is inserted into the value Set associated with key.
 	 * The value set is implemented as a TreeSet, so the Strings will be in alphabetical order
@@ -1022,31 +1022,31 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 		}
 		valueList.add(value);
 	}
-	
+
 	private String getNodeValue(String key, Document document) {
 		NodeList nodeList = document.getElementsByTagName(key);
 		return getNodeValue(key, nodeList);
 	}
-	
+
 	private String getNodeValue(String key, Element root) {
 		NodeList nodeList = root.getElementsByTagName(key);
 		return getNodeValue(key, nodeList);
 	}
-	
+
 	private String getNodeValue(String key, NodeList nodeList) {
 		String ret = "";
-		
+
 		if(nodeList != null && nodeList.item(0) != null && nodeList.item(0).getFirstChild() != null) {
 			ret = nodeList.item(0).getFirstChild().getNodeValue();
 		}
-		
+
 		if(ret == null) {
 			ret = "";
 		}
-		
+
 		return ret.trim();
 	}
-	
+
 	private void processError( ContentReviewItem item, Long status, String error, Integer errorCode )
 	{
 		try
@@ -1076,7 +1076,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 			releaseLock( item );
 		}
 	}
-	
+
 	private boolean processItem(ContentReviewItem currentItem){
 		if (currentItem.getRetryCount() == null) {
 			currentItem.setRetryCount(Long.valueOf(0));
@@ -1091,7 +1091,7 @@ public class CompilatioReviewServiceImpl extends BaseReviewServiceImpl {
 			currentItem.setNextRetryTime(this.getNextRetryTime(Long.valueOf(l)));
 		}
 		dao.update(currentItem);
-		
+
 		return true;
 	}
 }
